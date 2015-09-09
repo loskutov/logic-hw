@@ -81,14 +81,14 @@ findMP ((n, a) : xs) b | findinlist xs (a :→ b) /= Nothing
 findMP (x:xs) p = findMP xs p
 findMP [] _ = Nothing
 
-annotate :: [(Int, Prop)] -> (Int, Prop) -> ([(Int, Prop)], String)
-annotate xs (n, φ@(wtf -> Just (Axiom i))) = ((n, φ) : xs, "Сх. акс. " ++ show i)
-annotate xs (n, φ@(findMP xs -> Just (a, b))) = ((n, φ) : xs, "M.P. " ++ show a ++ ", " ++ show b)
-annotate xs _ = (xs, "Не доказано")
+annotate :: [(Int, Prop)] -> (Int, Prop) -> String
+annotate xs (n, φ@(wtf -> Just (Axiom i))) = "Сх. акс. " ++ show i
+annotate xs (n, φ@(findMP xs -> Just (a, b))) = "M.P. " ++ show a ++ ", " ++ show b
+annotate xs _ = "Не доказано"
 
 pmap f (n, a) = (n, f a)  -- unfortunately, I can not make a pair an instance of Functor ;(
 
 annotateList :: [(Int, Prop)] -> [(Int, Prop, String)]
 annotateList [] = []
-annotateList (x:xs) = (fst x, snd x, snd $ annotate xs x) : annotateList xs
+annotateList (x:xs) = (fst x, snd x, annotate xs x) : annotateList xs
 

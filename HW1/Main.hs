@@ -1,4 +1,3 @@
-{-# LANGUAGE FlexibleContexts, ViewPatterns, FlexibleInstances #-}
 module Main where
 
 import System.IO
@@ -18,4 +17,4 @@ formatAnnotation :: (Int, Prop, String) -> String
 formatAnnotation (i, p, s) = "(" ++ show i ++ ") " ++ show p ++ " (" ++ s ++ ")"
 
 main :: IO ()
-main = mapM_ (putStrLn . formatAnnotation) =<< (annotateFile =<< head <$> getArgs)
+main = mapM_ (putStrLn . formatAnnotation) =<< annotateFile =<< head <$> getArgs
