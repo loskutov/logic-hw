@@ -1,20 +1,22 @@
+{-# LANGUAGE UnicodeSyntax #-}
 module Main where
 
-import System.IO
+import Prelude.Unicode
 import System.Environment
-import Parser
 import Propositions
 import Utils
 
 
-parseFile :: FilePath -> IO [(Int, Prop)]
-parseFile filename = map (pmap $ parseP) <$> zip [1..] <$> readLines filename
+parseFile :: FilePath → IO [(Int, Prop)]
+parseFile filename = do
+    ls ← readLines filename
+    return $ map (pmap parseP) (zip [1..] ls)
 
-annotateFile :: FilePath -> IO [(Int, Prop, String)]
-annotateFile filename = (reverse . annotateList . reverse) <$> parseFile filename
+annotateFile :: FilePath → IO [(Int, Prop, Annotation)]
+annotateFile = (fmap $ reverse ∘ annotateList ∘ reverse) ∘ parseFile
 
-formatAnnotation :: (Int, Prop, String) -> String
-formatAnnotation (i, p, s) = "(" ++ show i ++ ") " ++ show p ++ " (" ++ s ++ ")"
+formatAnnotation :: (Int, Prop, Annotation) → String
+formatAnnotation (i, p, s) = ("(" ++ show i ++ ") " ++ show p ++ " (" ++ show s ++ ")")
 
 main :: IO ()
-main = mapM_ (putStrLn . formatAnnotation) =<< annotateFile =<< head <$> getArgs
+main = mapM_ (putStrLn ∘ formatAnnotation) =<< annotateFile =<< head <$> getArgs
