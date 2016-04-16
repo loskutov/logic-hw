@@ -5,12 +5,13 @@
 module Propositions where
 
 import Control.Applicative
-import Data.Attoparsec.Text (parseOnly, string, char, satisfy, sepBy)
+import Data.Attoparsec.Text (string, char, satisfy, sepBy)
 import Data.Attoparsec.Internal.Types (Parser)
 import Data.Eq.Unicode
 import Data.Text hiding (foldl1, foldr1, find)
 import Data.Char
 import Data.List (find)
+import Utils
 
 infixr 4 :→
 infixl 5 :|
@@ -45,6 +46,7 @@ data Annotation = MP (Int, Prop) (Int, Prop)
                 | Axiom Int
                 | Assumption
                 | None
+                deriving Eq
 
 isAxiom :: Annotation → Bool
 isAxiom (Axiom _) = True
@@ -82,11 +84,6 @@ parseExpr = do
                 fail "no conjuctions, so sad"
             else return $ foldl1 (:|) conjs
 
-parseText :: Parser Text a → Text → a
-parseText parser str = case parseOnly parser str of
-    Left _ → error $ "Could not parse \'" ++ (unpack str) ++ "\'"
-    Right a → a
-
 parseP :: Text → Prop
 parseP = parseText parseExpr
 
@@ -117,10 +114,10 @@ findinlist :: [(Int, Prop)] → Prop → Maybe (Int, Prop)
 findinlist xs a = find (\x → a == snd x) xs
 
 findMP :: [(Int, Prop)] → Prop → Maybe ((Int, Prop), (Int, Prop))
-findMP ((n, φ@(a :→ b)) : xs) b' | b == b', findinlist xs a ≠ Nothing
-                = (, (n, φ)) <$> (findinlist xs a)
-findMP ((n, a) : xs) b | findinlist xs (a :→ b) ≠ Nothing
-                = ((n, a), ) <$> (findinlist xs (a :→ b))
+findMP ((n, φ@(a :→ b)) : xs) b' | b == b', left ≠ Nothing
+                = (, (n, φ)) <$> left where left = findinlist xs a
+findMP ((n, a) : xs) b | left ≠ Nothing
+                = ((n, a), ) <$> left where left = findinlist xs (a :→ b)
 findMP (_:xs) p = findMP xs p
 findMP [] _ = Nothing
 
@@ -129,10 +126,13 @@ annotate _ (_, (wtf → Axiom i)) = Axiom i
 annotate xs (_, (findMP xs → Just ((a, ϕ), (b, ψ)))) = MP (a, ϕ) (b, ψ)
 annotate _ _ = None
 
+pmap :: (a → b) → (t, a) → (t, b)
 pmap f (n, a) = (n, f a)  -- unfortunately, I can not make a pair an instance of Functor ;(
 
-annotateList :: [(Int, Prop)] → [(Int, Prop, Annotation)]
-annotateList [] = []
-annotateList (x@(n, φ) : xs) = (n, φ, (annotate xs x)) : annotatedPrefix
-                               where annotatedPrefix = annotateList xs
+annotateList :: [(Int, Prop)] → Maybe [(Int, Prop, Annotation)]
+annotateList [] = Just []
+annotateList (x@(n, φ) : xs) | annotatedHead == None = Nothing
+                             | otherwise             = ((n, φ, annotatedHead) :) <$> annotatedTail
+                               where annotatedTail = annotateList xs
+                                     annotatedHead = annotate xs x
 

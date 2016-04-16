@@ -2,15 +2,18 @@
 {-# LANGUAGE UnicodeSyntax #-}
 module Main where
 
-import Data.Attoparsec.Text
+import Data.Attoparsec.Text (char, string, sepBy)
+import Data.Attoparsec.Internal.Types (Parser)
 import Data.List
+import Data.Maybe (fromJust)
+import Data.Text (Text)
 import Prelude.Unicode
 import System.Environment
 
 import Propositions
 import Utils
 
--- parseTitle :: Parser ([Prop], Prop)
+parseTitle :: Parser Text ([Prop], Prop)
 parseTitle = do
     assumptions ← parseExpr `sepBy` (char ',')
     string "|-"
@@ -51,7 +54,7 @@ parseFile filename = do
 deduct :: [Prop] → [Prop] → ([Prop], [Prop])
 deduct assumptions props = (tail assumptions, concat $ map (imply assumptions ∘ \(_, φ, a) → (φ, a)) annotated)
     where
-        annotated = (reverse . annotateList . reverse) (zip [1..] props)
+        annotated = (reverse . fromJust . annotateList . reverse) (zip [1..] props)
 
 main :: IO ()
 main = do

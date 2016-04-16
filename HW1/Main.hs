@@ -12,11 +12,15 @@ parseFile filename = do
     ls ← readLines filename
     return $ map (pmap parseP) (zip [1..] ls)
 
-annotateFile :: FilePath → IO [(Int, Prop, Annotation)]
-annotateFile = (fmap $ reverse ∘ annotateList ∘ reverse) ∘ parseFile
+annotateFile :: FilePath → IO (Maybe [(Int, Prop, Annotation)])
+annotateFile = (fmap $ (reverse <$>) ∘ annotateList ∘ reverse) ∘ parseFile
 
 formatAnnotation :: (Int, Prop, Annotation) → String
 formatAnnotation (i, p, s) = ("(" ++ show i ++ ") " ++ show p ++ " (" ++ show s ++ ")")
 
+printAnnotationList :: Maybe [(Int, Prop, Annotation)] → IO ()
+printAnnotationList  Nothing  = putStrLn "Proof incorrect"
+printAnnotationList (Just xs) = mapM_ (putStrLn ∘ formatAnnotation) xs
+
 main :: IO ()
-main = mapM_ (putStrLn ∘ formatAnnotation) =<< annotateFile =<< head <$> getArgs
+main = printAnnotationList =<< annotateFile =<< head <$> getArgs
