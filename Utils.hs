@@ -2,6 +2,7 @@
 module Utils where
 import Data.Attoparsec.Internal.Types (Parser)
 import Data.Attoparsec.Text (parseOnly)
+import Data.Set
 import Data.Text
 import Data.Text.IO
 import Prelude.Unicode
@@ -19,3 +20,12 @@ printList = putStr ∘ unlines
 
 readLines :: FilePath → IO [Text]
 readLines filename = lines <$> readFile filename
+
+(∪) :: Ord α => Set α -> Set α -> Set α 
+(∪) = union
+
+(∖) :: Ord α => Set α -> Set α -> Set α
+(∖) = difference
+
+(∉) :: Ord α => α -> Set α -> Bool
+(∉) = notMember
