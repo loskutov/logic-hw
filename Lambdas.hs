@@ -4,7 +4,7 @@ module Lambdas where
 
 import Control.Applicative
 import Control.Monad
-import Data.Attoparsec.Text (char, space, satisfy, sepBy1, option)
+import Data.Attoparsec.Text (char, skipSpace, space, satisfy, sepBy1, option)
 import Data.Attoparsec.Internal.Types (Parser)
 import Data.Set
 import Data.Text hiding (foldl1, foldr1, find, singleton)
@@ -23,22 +23,21 @@ instance Show Lambda where
 
 parseLambda :: Parser Text Lambda
 parseLambda = do
-  many space
-  app ← option id $ Application <$> parseApplication <* many space
-  char '\\'
-  (Var var) ← many space *> parseVar
-  many space *> char '.' <* many space
-  l ← parseLambda
-  return $ app $ Lambda var l
+  skipSpace
+  app ← option id $ Application <$> parseApplication <* skipSpace
+  Var var ← char '\\' *> skipSpace *> parseVar
+  skipSpace *> char '.' *> skipSpace
+  λ ← parseLambda
+  return $ app $ Lambda var λ
   <|> parseApplication
 
 parseApplication :: Parser Text Lambda
 parseApplication = do
   atoms ← parseAtom `sepBy1` space
-  return $ foldl1 (Application) atoms
+  return $ foldl1 Application atoms
 
 parseAtom :: Parser Text Lambda
-parseAtom = many space *> ((char '(' *> parseLambda <* char ')') <|> parseVar)
+parseAtom = skipSpace *> (char '(' *> parseLambda <* skipSpace <* char ')' <|> parseVar)
 
 parseVar :: Parser Text Lambda
 parseVar = do

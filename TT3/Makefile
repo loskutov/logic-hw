@@ -5,4 +5,4 @@ llvm: Main.hs
 run: all
 	./Main tests/good1.in
 clean:
-	rm -f Main.hi Main.o
+	rm -f Main Main.hi Main.o
