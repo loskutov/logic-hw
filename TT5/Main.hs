@@ -53,7 +53,7 @@ substitutable ((Var _), _) = True
 substitutable _                         = False
 
 trySubstitute :: (Eq a, Ord a, Show a) => [Equation a] → Map a (Term a) → Maybe ([Equation a], Map a (Term a))
-trySubstitute ((eq@(Var x, f)):xs) acc
+trySubstitute ((Var x, f):xs) acc
   | x ∈ f = Nothing
   | otherwise = trySubstitute ((emap (substitute x f)) <$> xs) (insert x f ((substitute x f) <$> acc))
 trySubstitute (x:xs) acc = case trySubstitute xs acc of
