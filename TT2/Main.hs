@@ -2,11 +2,12 @@
 import Utils
 import Lambdas
 import Data.Set
-import Data.Text (pack)
+import Prelude hiding (readFile)
+import Data.ByteString (readFile)
 
 main :: IO ()
 main = do
     input ← readFile "task2.in"
-    let λ = parseText parseLambda $ pack input
+    let λ = parseBS parseLambda input
     let free = freeVars λ
     writeFile "task2.out" $ unlines $ elems free
