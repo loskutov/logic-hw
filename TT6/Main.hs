@@ -1,20 +1,31 @@
 {-# LANGUAGE UnicodeSyntax #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
 
-import Data.Map.Strict
+import Data.Map.Strict hiding (map)
+import Data.List (intercalate)
 import Prelude hiding (readFile, lookup)
 import Data.ByteString (readFile)
 import Utils
 import qualified Lambdas as Λ
-import TT5.Main hiding (main, myshow)
+import TT5.Unification hiding (main, myshow)
 import Debug.Trace
 
-data Type = AtomType String | Type :→: Type deriving (Eq, Ord, Show)
+data Type = AtomType String | Type :→: Type deriving (Eq, Ord)
+
+instance Show Type where
+  show (AtomType s) = s
+  show (t :→: t') = "(" ++ (show t) ++ ")" ++ "→" ++ show t'
+
+instance Show (Term Type) where
+  show (Function s xs) = s ++ "(" ++ ((intercalate "," (map show xs))) ++ ")"
+  show (Var s) = show s
 
 nameType :: Int → Type
 nameType n = AtomType $ "t" ++ (show n)
 
-getType :: Λ.Lambda → Int → Map String Type → [Equation Type] → (Type, Int, Map String Type, [Equation Type])
-getType x _ _ _ | trace (show x) False = undefined
+getType :: (Show (Term Type)) => Λ.Lambda → Int → Map String Type → [Equation Type] → (Type, Int, Map String Type, [Equation Type])
+getType _ _ _ x | trace (show x) False = undefined
 getType v@(Λ.Var x) n m eqs = (newType, newN, insert x newType m, eqs)
   where (newType, newN) = case lookup x m of
           Nothing → (nameType n, n+1)
@@ -36,7 +47,7 @@ myshow :: Term Type → String
 myshow (Function _ [lhs, rhs]) = "(" ++ (myshow lhs) ++ "->" ++ (myshow rhs) ++ ")"
 myshow (Var (AtomType t)) = t
 
-main :: IO ()
+main :: (Show (Term Type)) => IO ()
 main = do
   input ← readFile "task6.in"
   let λ = parseBS Λ.parseLambda input
