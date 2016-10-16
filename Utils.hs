@@ -1,14 +1,14 @@
 {-# LANGUAGE UnicodeSyntax #-}
 module Utils where
-import Data.Attoparsec.Internal.Types (Parser)
-import Data.Attoparsec.Text (parseOnly)
+import           Data.Attoparsec.Internal.Types (Parser)
+import           Data.Attoparsec.Text (parseOnly)
 import qualified Data.Attoparsec.ByteString.Char8
 import qualified Data.ByteString.Char8 
-import Data.ByteString (ByteString)
-import Data.Set
-import Data.Text
-import Data.Text.IO
-import Prelude.Unicode
+import           Data.ByteString (ByteString)
+import           Data.Set
+import           Data.Text
+import           Data.Text.IO
+import           Prelude.Unicode
 
 import Prelude hiding (lines, unlines, readFile, putStr)
 
@@ -24,7 +24,7 @@ parseBS parser str = case Data.Attoparsec.ByteString.Char8.parseOnly parser str 
 
 
 printList :: [Text] → IO ()
-printList = putStr ∘ unlines
+printList = putStr ◦ unlines
 
 readLines :: FilePath → IO [Text]
 readLines filename = lines <$> readFile filename

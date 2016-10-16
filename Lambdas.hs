@@ -1,26 +1,28 @@
- {-# LANGUAGE UnicodeSyntax #-}
- {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE UnicodeSyntax     #-}
 module Lambdas where
 
-import Control.Applicative
-import Control.Monad
+import           Control.Applicative
+import           Control.Monad
 -- import Data.Attoparsec.ByteString (satisfy, sepBy1, option)
-import Data.Attoparsec.ByteString.Char8
+import           Data.Attoparsec.ByteString.Char8
 -- import Data.Attoparsec.Internal.Types (Parser)
-import Data.Function
-import Data.Set hiding (map)
-import Data.Char (isAsciiLower)
+import           Data.Char                        (isAsciiLower)
+import           Data.Function
+import           Data.Set                         hiding (map)
+import           Debug.Trace
 
-import Utils
+import           Utils
 
 data Lambda = Application Lambda Lambda
             | Var String
             | Lambda String Lambda
+            deriving (Eq, Ord)
 
 instance Show Lambda where
   show (Application λ1 λ2) = "(" ++ (show λ1) ++ " " ++ (show λ2) ++ ")"
-  show (Var s) = s
-  show (Lambda s λ) = "(\\" ++ s ++ "." ++ (show λ) ++ ")"
+  show (Var s)             = s
+  show (Lambda s λ)        = "(\\" ++ s ++ "." ++ (show λ) ++ ")"
 
 parseExpr :: Parser Lambda
 parseExpr = skipSpace *> (parseApplication <|> parseHnf) <* skipSpace
@@ -62,6 +64,7 @@ rename = (++ "$")
 
 -- | `substitute old new λ` substitutes `old` with `new` in `λ`
 substitute :: String → Lambda → Lambda → Lambda
+substitute _ _ _ | trace "mmm substitute" False = undefined
 substitute old new v@(Var s) | s == old  = new
                              | otherwise = v
 substitute old new l@(Lambda s λ) | s == old               = l
