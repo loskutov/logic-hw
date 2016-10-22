@@ -10,7 +10,7 @@ import Utils
 parseFile :: FilePath → IO [(Int, Prop)]
 parseFile filename = do
     ls ← readLines filename
-    return $ map (pmap parseP) (zip [1..] ls)
+    return $ map (fmap parseP) (zip [1..] ls)
 
 annotateFile :: FilePath → IO (Maybe [(Int, Prop, Annotation)])
 annotateFile = (fmap $ (reverse <$>) ∘ annotateList ∘ reverse) ∘ parseFile

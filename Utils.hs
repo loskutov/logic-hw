@@ -24,7 +24,7 @@ parseBS parser str = case Data.Attoparsec.ByteString.Char8.parseOnly parser str 
 
 
 printList :: [Text] → IO ()
-printList = putStr ◦ unlines
+printList = putStr . unlines
 
 readLines :: FilePath → IO [Text]
 readLines filename = lines <$> readFile filename

@@ -126,9 +126,6 @@ annotate _ (_, (wtf → Axiom i)) = Axiom i
 annotate xs (_, (findMP xs → Just ((a, ϕ), (b, ψ)))) = MP (a, ϕ) (b, ψ)
 annotate _ _ = None
 
-pmap :: (a → b) → (t, a) → (t, b)
-pmap f (n, a) = (n, f a)  -- unfortunately, I can not make a pair an instance of Functor ;(
-
 annotateList :: [(Int, Prop)] → Maybe [(Int, Prop, Annotation)]
 annotateList [] = Just []
 annotateList (x@(n, φ) : xs) | annotatedHead == None = Nothing

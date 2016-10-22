@@ -7,7 +7,7 @@ import           Control.Monad
 -- import Data.Attoparsec.ByteString (satisfy, sepBy1, option)
 import           Data.Attoparsec.ByteString.Char8
 -- import Data.Attoparsec.Internal.Types (Parser)
-import           Data.Char                        (isAsciiLower)
+import           Data.Char                        (chr, isAsciiLower, ord)
 import           Data.Function
 import           Data.Set                         hiding (map)
 import           Debug.Trace
@@ -58,18 +58,25 @@ freeVars (Var s)             = singleton s
 freeVars (Application λ1 λ2) = (freeVars λ1) ∪ (freeVars λ2)
 freeVars (Lambda s λ)        = (freeVars λ)  ∖ (singleton s)
 
+incString :: String → String
+incString []       = "a"
+incString ('z':xs) = 'z' : incString xs
+incString (x:xs)   = (chr $ ord x + 1) : xs
 
-rename :: String → String
-rename = (++ "$")
+
+
+rename :: Set String → String → String
+rename vars var | var ∉ vars = var
+                | otherwise = rename vars (incString var)
 
 -- | `substitute old new λ` substitutes `old` with `new` in `λ`
 substitute :: String → Lambda → Lambda → Lambda
-substitute _ _ _ | trace "mmm substitute" False = undefined
+-- substitute old new l | trace ("mmm substitute " ++ (show old) ++ "->(" ++ (show new) ++ ") in " ++ (show l)) False = undefined
 substitute old new v@(Var s) | s == old  = new
                              | otherwise = v
 substitute old new l@(Lambda s λ) | s == old               = l
                                   | s ∈ free || old ∈ free = Lambda newName $ (substitute old new . substitute s (Var newName)) λ
                                   | otherwise              = Lambda s $ substitute old new λ
-                                     where newName = rename s
-                                           free = freeVars new
+                                      where newName = rename (free ∪ freeVars l) s
+                                            free = freeVars new
 substitute s λ (Application λ1 λ2) = (Application `on` substitute s λ) λ1 λ2
