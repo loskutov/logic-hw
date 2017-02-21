@@ -2,6 +2,7 @@
 -- module TT5.Main where
 
 import Data.Map.Strict (Map, empty, assocs)
+import qualified Data.Set as S
 import Data.ByteString.Char8 (readFile, lines)
 import Prelude hiding (lookup, readFile, lines)
 import TT5.Unification
@@ -16,6 +17,6 @@ main :: IO ()
 main = do
     input ← readFile "task5.in"
     let eqs = map (parseBS parseEquation) $ lines input
-    let ans = unify eqs empty
+    let ans = unify S.empty eqs
     writeFile "task5.out" $ myshow ans ++ "\n"
 
