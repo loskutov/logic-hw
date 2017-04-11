@@ -13,7 +13,7 @@ parseFile filename = do
     return $ map (fmap parseP) (zip [1..] ls)
 
 annotateFile :: FilePath → IO (Maybe [(Int, Prop, Annotation)])
-annotateFile = (fmap $ (reverse <$>) ∘ annotateList ∘ reverse) ∘ parseFile
+annotateFile = (fmap $ (reverse <$>) ∘ annotateList [] ∘ reverse) ∘ parseFile
 
 formatAnnotation :: (Int, Prop, Annotation) → String
 formatAnnotation (i, p, s) = ("(" ++ show i ++ ") " ++ show p ++ " (" ++ show s ++ ")")
