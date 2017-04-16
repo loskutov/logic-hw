@@ -10,15 +10,16 @@ import           Data.Bool           (Bool (..), not, otherwise, (&&), (||))
 import           Data.Either
 import           Data.Function       (id, ($), (.))
 import           Data.Functor        ((<$>))
-import           Data.List           (head, zip, (++))
+import           Data.List           (find, head, unlines, zip, (++), intercalate)
 import           Data.Map.Strict     ((!))
 import qualified Data.Map.Strict     as M
 import qualified Data.Set            as S
 import           Data.String         (String)
 import           Data.Text.IO        (readFile)
-import           Data.Tuple          (fst, snd)
+import           Data.Tuple          (snd)
+import           Prelude             (Maybe (..), show, undefined)
 import           System.Environment  (getArgs)
-import           System.IO           (FilePath, IO, print)
+import           System.IO           (FilePath, IO, putStr)
 
 import           Propositions
 
@@ -39,14 +40,21 @@ evaluate (Var α)  values = values ! α
 parseFile :: FilePath → IO Prop
 parseFile = (parseP <$>) . readFile
 
-undefined :: a
-undefined = undefined
-
+-- a |- !!a
+aToNegNegA :: Prop -> [Prop]
+aToNegNegA a = implyItself (Neg a) ++
+  [ a
+  , a :→ Neg a :→ a
+  , Neg a :→ a
+  , (Neg a :→ a) :→ (Neg a :→ Neg a) :→ Neg (Neg a)
+  , (Neg a :→ Neg a) :→ Neg (Neg a)
+  , Neg (Neg a)
+  ]
 -- Proves the given proposition or its negation given the assignments of vars
 proveOrDisprove :: M.Map String Bool -> Prop -> Either [Prop] [Prop]
 proveOrDisprove vars (a@(proveOrDisprove vars -> Right as) :| b) = Right $ as ++
-  [ a :→ a :| b
-  , a :| b
+  [ a :→ a :| b -- Axiom
+  , a :| b      -- MP
   ]
 proveOrDisprove vars (a :| b@(proveOrDisprove vars -> Right bs)) = Right $ bs ++
   [ b :→ a :| b
@@ -54,14 +62,14 @@ proveOrDisprove vars (a :| b@(proveOrDisprove vars -> Right bs)) = Right $ bs ++
   ]
 proveOrDisprove vars (a@(proveOrDisprove vars -> Left as) :| b@(proveOrDisprove vars -> Left bs)) = Left $ as ++ bs ++
   implyItself a ++
-  [ (a :| b :→ a) :→ (a :| b :→ Neg a) :→ Neg (a :| b)
-  , Neg a :→ a :| b :→ Neg a
-  , a :| b :→ Neg a
-  ] ++ either id id (proveOrDisprove vars (b :→ a)) ++
-  [ (a :→ a) :→ (b :→ a) :→ (a :| b :→ a)
-  , (b :→ a) :→ (a :| b :→ a)
-  , a :| b :→ a
-  , (a :| b :→ Neg a) :→ Neg (a :| b)
+  [ (a :| b :→ a) :→ (a :| b :→ Neg a) :→ Neg (a :| b)     -- Axiom
+  , Neg a :→ a :| b :→ Neg a                               -- Axiom 1
+  , a :| b :→ Neg a                                        -- MP
+  ] ++ either undefined id (proveOrDisprove vars (b :→ a)) ++
+  [ (a :→ a) :→ (b :→ a) :→ (a :| b :→ a)  -- Axiom
+  , (b :→ a) :→ (a :| b :→ a)              -- MP
+  , a :| b :→ a                            -- MP
+  , (a :| b :→ Neg a) :→ Neg (a :| b)      -- MP
   , Neg (a :| b)
   ]
 proveOrDisprove vars (a@(proveOrDisprove vars -> Right as) :& b@(proveOrDisprove vars -> Right bs)) = Right $ as ++ bs ++
@@ -97,18 +105,18 @@ proveOrDisprove vars (a@(proveOrDisprove vars -> Right as) :→ b@(proveOrDispro
   , ((a :→ b) :→ Neg b) :→ Neg (a :→ b)
   , Neg (a :→ b)
   ]
-proveOrDisprove vars (a@(proveOrDisprove vars -> Left as) :→ b@(proveOrDisprove vars -> Left bs)) = Right $ as ++ bs ++
+proveOrDisprove vars (a@(proveOrDisprove vars -> Left _) :→ b@(proveOrDisprove vars -> Left _)) = Right $
   contraposition (Neg b :→ Neg a) ++
-  either id id (proveOrDisprove vars (Neg b :→ Neg a)) ++
+  either undefined id (proveOrDisprove vars (Neg b :→ Neg a)) ++
+  snd (deduce [a, Neg (Neg a) :→ Neg (Neg b)] (aToNegNegA a ++
+       [ Neg (Neg a) :→ Neg (Neg b)
+       , Neg (Neg b)
+       , Neg (Neg b) :→ b
+       , b
+       ])) ++
   [ a :→ b ]
 proveOrDisprove vars (Neg (proveOrDisprove vars -> Left as)) = Right as
-proveOrDisprove vars (Neg a@(proveOrDisprove vars -> Right as)) = Left $ as ++ implyItself (Neg a) ++
-  [ a :→ Neg a :→ a
-  , Neg a :→ a
-  , (Neg a :→ a) :→ (Neg a :→ Neg a) :→ Neg (Neg a)
-  , (Neg a :→ Neg a) :→ Neg (Neg a)
-  , Neg (Neg a)
-  ]
+proveOrDisprove vars (Neg a@(proveOrDisprove vars -> Right as)) = Left $ as ++ aToNegNegA a
 proveOrDisprove vars v@(Var a) | vars ! a = Right $ pure v
                                | otherwise = Left $ pure (Neg v)
 
@@ -120,19 +128,22 @@ assignments vars = [M.fromAscList (zip varsList vals) | vals ← replicateM n [F
 
 assignmentsToAssumptions :: M.Map String Bool -> [Prop]
 assignmentsToAssumptions = ((\(s, v) -> if v
-                                           then      Var s
-                                           else Neg (Var s)) <$>) . M.toAscList
+                                        then      Var s
+                                        else Neg (Var s)) <$>) . M.toAscList
 
 -- Proposition, assignments, and vars left to assign
 solve :: Prop -> M.Map String Bool -> [String] -> [Prop]
 solve p vars (x:xs) = let f = solve p (M.insert x False vars) xs
                           t = solve p (M.insert x  True vars) xs
-                          a = (Var . fst) <$> M.toAscList vars
+                          a = assignmentsToAssumptions vars
                       in hypothesisExclusion (Var x : a, t) (Neg (Var x) : a, f)
-solve p vars [] = either id id $ proveOrDisprove vars p
+solve p vars [] = either undefined id $ proveOrDisprove vars p
 
 main :: IO ()
 main = do
-    expr ← parseFile . head =<< getArgs
-    let vars = variables expr
-    print $ solve expr M.empty $ S.toAscList vars
+  expr ← parseFile . head =<< getArgs
+  let vars = variables expr
+  let a = assignments vars
+  case find (not . evaluate expr) a of
+    Nothing -> putStr $ unlines $ (show <$>) $ solve expr M.empty $ S.toAscList vars
+    Just x  -> putStr $ "False for " ++ intercalate ", " ((\(k, v) -> k ++ "=" ++ show v) <$> M.toAscList x) ++ "\n"

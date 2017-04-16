@@ -10,7 +10,6 @@ import           Data.Attoparsec.Text           (char, satisfy, sepBy, string)
 import           Data.Char
 import           Data.Eq.Unicode
 import           Data.List                      (find, foldl1')
-import           Data.Maybe                     (fromJust)
 import           Data.Text                      (Text)
 import Debug.Trace
 import           Utils
@@ -125,6 +124,7 @@ findMP [] _ = Nothing
 
 -- annotate assumptions proven prop
 annotate :: [Prop] -> [(Int, Prop)] → Prop → Annotation
+-- annotate ps prvn p | trace ("annotate " ++ show ps ++ " " ++ show prvn ++ " " ++ show p) False = undefined
 annotate _ _ (wtf → Axiom i) = Axiom i
 annotate _ proven (findMP proven → Just (a, b)) = MP a b
 annotate assumptions _ a | a `elem` assumptions = Assumption
