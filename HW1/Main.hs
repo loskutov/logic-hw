@@ -22,7 +22,7 @@ formatAnnotation :: (Int, Prop, Annotation) → String
 formatAnnotation (i, p, s) = ("(" ++ show i ++ ") " ++ show p ++ " (" ++ show s ++ ")")
 
 printAnnotationList :: [(Int, Prop, Annotation)] → IO ()
-printAnnotationList (find (\(_,_,a) -> a == None) -> Just _)  = putStrLn "Proof incorrect"
+printAnnotationList (find (\(_,_,a) -> a == None) -> Just (n, _, _))  = putStrLn $ "Proof incorrect from position " ++ show n
 printAnnotationList xs = mapM_ (putStrLn ∘ formatAnnotation) xs
 
 main :: IO ()
