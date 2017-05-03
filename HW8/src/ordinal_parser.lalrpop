@@ -1,0 +1,34 @@
+use ordinal::Ordinal;
+use ordinal::Ordinal::{Num, Omega};
+use std::str::FromStr;
+
+grammar;
+
+pub equation : (Ordinal, Ordinal) = {
+    <expr> "=" <expr>
+};
+
+expr: Ordinal = {
+    summand,
+    <l:expr> "+" <r:summand> => l + r
+};
+
+summand: Ordinal = {
+    factor,
+    <l:summand> "*" <r:factor> => l * r
+};
+
+factor: Ordinal = {
+    term,
+    <l:term> "^" <r:factor> => l ^ r
+};
+
+term: Ordinal = {
+    "w" => Omega,
+    num,
+    "(" <expr> ")"
+};
+
+num: Ordinal = {
+    r"[0-9]+" => Num(u32::from_str(<>).unwrap())
+};
