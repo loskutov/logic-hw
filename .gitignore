@@ -2,4 +2,8 @@
 !/**/
 !*.hs
 !Makefile
+!*.toml
+!*.rs
+*parser.rs
+!*.lalrpop
 !LICENSE

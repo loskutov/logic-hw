@@ -10,7 +10,8 @@ import           Data.Bool           (Bool (..), not, otherwise, (&&), (||))
 import           Data.Either
 import           Data.Function       (id, ($), (.))
 import           Data.Functor        ((<$>))
-import           Data.List           (find, head, unlines, zip, (++), intercalate)
+import           Data.List           (find, head, intercalate, unlines, zip,
+                                      (++))
 import           Data.Map.Strict     ((!))
 import qualified Data.Map.Strict     as M
 import qualified Data.Set            as S
